@@ -20,7 +20,7 @@ V_T = [ i for i in range(t_num)]
 R_loc = [[random.uniform(0,1),random.uniform(0,1)] for i in range(r_num)]
 T_loc = [[random.uniform(0,1),random.uniform(0,1)] for i in range(t_num)]
 
-# Special Case for Test (Don't change)
+# Special Case for Test (Uncomment below code block to test)
 # r_num = 2
 # t_num = 3
 # T_loc = [[0,2],[1,2],[1,2.5]]
