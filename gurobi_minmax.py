@@ -8,8 +8,8 @@ from itertools import combinations
 
 
 # robot and task number
-r_num = 3
-t_num = 10
+r_num = 2
+t_num = 13
 
 # indices for robot and task node
 V_R = [ i for i in range(r_num)]
@@ -44,6 +44,7 @@ for k in V_R:
         travel_time[r,t_num+1,k] = 0
 
 # index for decision variable
+
 V_ID = V_T+[len(V_T)]
 V_C = V_T + [t_num]
 
@@ -101,8 +102,8 @@ for k in V_R:
 robot = [[] for _ in range(r_num)]
 for r in V_R:
     n = t_num
-    while sum(solution[n,:,r])==1 and solution[n,-1,r]==0:
-        n = np.where(solution[n,:,r]==1)[0][0]
+    while sum(solution[n,:,r])>0.5 and solution[n,-1,r] < 0.1:
+        n = np.where(solution[n,:,r]>0.5)[0][0]
         robot[r].append(n)
 
 # plot result

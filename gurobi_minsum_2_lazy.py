@@ -4,12 +4,14 @@ import numpy as np
 import random
 from scipy.spatial import distance_matrix
 from gurobipy import GRB
-from itertools import combinations
+from itertools import combinations, permutations
+
+import networkx as nx
 
 
 # robot number
 r_num = 2
-t_num = 13
+t_num = 10
 
 # index for robot node
 V_R = [ i for i in range(r_num)]
@@ -74,18 +76,40 @@ m.addConstrs(x.sum('*', i, k) - x.sum(i,'*', k) == 0 for i in V_T for k in V_R)
 # prevent select same node
 m.addConstr(gp.quicksum(x.sum(i,i,'*') for i in V_T) == 0)
 
-# subroute elimination
-for degree in range(2, len(V_T)+1):
-    if degree > 2:
-        for comb in list(combinations(V_T, degree)):
-            m.addConstr(gp.quicksum(x.sum(i,j,'*') + x.sum(j,i,'*') for i, j in combinations(comb, 2)) <= degree - 1)
+# Callback - use lazy constraints to eliminate sub-tours
+def subtourelim(model, where):
+    if where == GRB.Callback.MIPSOL:
+        # make a list of edges selected in the solution
+        vals = model.cbGetSolution(model._vars)
+        selected = gp.tuplelist((i, j) for i, j in permutations(V_T, 2) if sum([vals[i,j,k] for k in range(r_num)]) >= 0.5)
+        # find the shortest cycle in the selected edge list
+        # print("selected:",selected)
+        tour = subtour(selected)
+        # add subtour elimination constr. for every pair of cities in tour
+        # print("tour:",tour)
+        if tour:
+            model.cbLazy(gp.quicksum(model._vars.sum(i, j,'*')+model._vars.sum(j,i,'*') for i, j in combinations(tour, 2)) <= len(tour)-1)
+
+# Given a tuplelist of edges, find the shortest subtour
+def subtour(edges):
+    cycle_list = []
+    G = nx.DiGraph()
+    for i, j in edges:
+        G.add_edge(i, j)
+    for cycle in nx.simple_cycles(G):
+        cycle_list.append(cycle)
+
+    if cycle_list:
+        return min(cycle_list,key=len)
     else:
-        m.addConstrs(gp.quicksum([x.sum(i,j,'*'),x.sum(j,i,'*')]) <= degree - 1 for i, j in combinations(V_T,2))
+        return cycle_list
 
 # minsum objective
 m.setObjective(x.prod(travel_time), GRB.MINIMIZE)
 
-m.optimize()
+m._vars = x
+m.Params.lazyConstraints = 1
+m.optimize(subtourelim)
 
 # get solution matrix from model
 solution = np.zeros((t_num+1, t_num+1, r_num))
