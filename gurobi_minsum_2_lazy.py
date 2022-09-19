@@ -9,6 +9,9 @@ from itertools import combinations, permutations
 import networkx as nx
 
 
+TIME_LIMIT = None # if you want time limit for solver
+LOG_TO_CONSOLE = True # False if you don't want to print log on the console
+
 # robot number
 r_num = 2
 t_num = 10
@@ -109,6 +112,9 @@ m.setObjective(x.prod(travel_time), GRB.MINIMIZE)
 
 m._vars = x
 m.Params.lazyConstraints = 1
+if TIME_LIMIT is not None:
+    m.Params.timeLimit = TIME_LIMIT
+m.Params.LogToConsole = LOG_TO_CONSOLE
 m.optimize(subtourelim)
 
 # get solution matrix from model

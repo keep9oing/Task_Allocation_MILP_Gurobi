@@ -7,6 +7,9 @@ from gurobipy import GRB
 from itertools import combinations
 
 
+TIME_LIMIT = None # if you want time limit for solver
+LOG_TO_CONSOLE = True # False if you don't want to print log on the console
+
 # robot number
 r_num = 2
 t_num = 13
@@ -84,7 +87,9 @@ for degree in range(2, len(V_T)+1):
 
 # minsum objective
 m.setObjective(x.prod(travel_time), GRB.MINIMIZE)
-
+if TIME_LIMIT is not None:
+    m.Params.timeLimit = TIME_LIMIT
+m.Params.LogToConsole = LOG_TO_CONSOLE
 m.optimize()
 
 # get solution matrix from model
